@@ -1,25 +1,48 @@
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { Streamdown } from 'streamdown';
+/* Modern Javanese Editorial: tactile stationery, asymmetric folio layout, ink/parchment/clay palette, Svara Copper #B86B4B, Cormorant Garamond + DM Sans, quiet transform/opacity motion. */
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CalendarDays, ChevronLeft, ChevronRight, Copy, ExternalLink, Gift, Heart, MapPin, Menu, Music2, Play, Send, X } from "lucide-react";
 
-/**
- * All content in this page are only for example, replace with your own feature implementation
- * When building pages, remember your instructions in Frontend Best Practices, Design Guide and Common Pitfalls
- */
+const CONFIG = {
+  couple: "Svara & Aruna", shortNames: "Svara · Aruna", guestFallback: "Tamu undangan",
+  dateLabel: "Sabtu, 24 Oktober 2026", eventDate: "2026-10-24T16:00:00+07:00",
+  venue: "Pendopo Amerta", address: "Jl. Prawirotaman No. 28, Yogyakarta", mapsUrl: "https://maps.google.com/?q=Pendopo+Amerta+Yogyakarta",
+  story: "Kami bertemu dalam percakapan yang sederhana, lalu memilih untuk terus berjalan dalam arah yang sama. Dengan rendah hati, kami mengundang Anda untuk hadir dalam hari yang kami simpan baik-baik ini.",
+  bank: "Bank Mandiri", account: "1400 8821 771", recipient: "Svara Prameswari",
+  calendarUrl: "https://calendar.google.com/calendar/render?action=TEMPLATE&text=Svara+%26+Aruna+Wedding&dates=20261024T090000Z/20261024T130000Z&details=Akad+nikah+dan+resepsi+Svara+%26+Aruna&location=Pendopo+Amerta,+Yogyakarta",
+};
+const gallery = [
+  ["Courtyard light", "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1200&q=85"],
+  ["A quiet promise", "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=85"],
+  ["The little details", "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=85"],
+  ["After the rain", "https://images.unsplash.com/photo-1507504031003-b417219a0fde?auto=format&fit=crop&w=1200&q=85"],
+  ["Hands held", "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=1200&q=85"],
+  ["A shared table", "https://images.unsplash.com/photo-1478146896981-b80fe463b330?auto=format&fit=crop&w=1200&q=85"],
+];
+function Seal({ small = false }: { small?: boolean }) { return <div className={`seal ${small ? "seal--small" : ""}`} aria-label="Svara and Aruna monogram"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="39" /><path d="M68 25c-13-9-30-5-31 8-1 12 11 14 22 18 12 4 14 16 5 23-9 7-24 5-32-3" /><path d="M61 22 42 78M42 62h25" /></svg></div>; }
+function SectionTitle({ index, eyebrow, title, children }: { index: string; eyebrow: string; title: string; children?: React.ReactNode }) { return <div className="section-title reveal"><div className="section-index">{index}</div><div><p className="eyebrow">{eyebrow}</p><h2>{title}</h2>{children}</div></div>; }
+function Countdown() { const target = useMemo(() => new Date(CONFIG.eventDate).getTime(), []); const [left, setLeft] = useState(target - Date.now()); useEffect(() => { const id = window.setInterval(() => setLeft(Math.max(0, target - Date.now())), 1000); return () => clearInterval(id); }, [target]); const units = [["Hari", Math.floor(left / 86400000)], ["Jam", Math.floor(left / 3600000) % 24], ["Menit", Math.floor(left / 60000) % 60], ["Detik", Math.floor(left / 1000) % 60]]; return <div className="countdown">{units.map(([label, value]) => <div className="time" key={label}><strong>{String(value).padStart(2, "0")}</strong><span>{label}</span></div>)}</div>; }
 export default function Home() {
-  // If theme is switchable in App.tsx, we can implement theme toggling like this:
-  // const { theme, toggleTheme } = useTheme();
-
-  return (
-    <div className="min-h-screen flex flex-col">
-      <main>
-        {/* Example: lucide-react for icons */}
-        <Loader2 className="animate-spin" />
-        Example Page
-        {/* Example: Streamdown for markdown rendering */}
-        <Streamdown>Any **markdown** content</Streamdown>
-        <Button variant="default">Example Button</Button>
-      </main>
-    </div>
-  );
+  const guest = new URLSearchParams(window.location.search).get("to") || CONFIG.guestFallback;
+  const [opened, setOpened] = useState(false), [music, setMusic] = useState(false), [lightbox, setLightbox] = useState<number | null>(null), [submitted, setSubmitted] = useState(false), [copied, setCopied] = useState(false), [message, setMessage] = useState("");
+  const [entries, setEntries] = useState<{ name: string; message: string }[]>(() => { try { return JSON.parse(localStorage.getItem("svara-guestbook") || "[]"); } catch { return []; } });
+  const audio = useRef<HTMLAudioElement>(null);
+  useEffect(() => { if (!opened) return; document.body.classList.add("is-open"); const observer = new IntersectionObserver(items => items.forEach(item => item.isIntersecting && item.target.classList.add("is-visible")), { threshold: .1 }); document.querySelectorAll(".reveal").forEach(el => observer.observe(el)); return () => { document.body.classList.remove("is-open"); observer.disconnect(); }; }, [opened]);
+  useEffect(() => { if (lightbox !== null) { document.body.style.overflow = "hidden"; const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setLightbox(null); if (e.key === "ArrowRight") setLightbox((lightbox + 1) % gallery.length); if (e.key === "ArrowLeft") setLightbox((lightbox - 1 + gallery.length) % gallery.length); }; window.addEventListener("keydown", onKey); return () => { document.body.style.overflow = ""; window.removeEventListener("keydown", onKey); }; } }, [lightbox]);
+  const open = () => { setOpened(true); audio.current?.play().then(() => setMusic(true)).catch(() => undefined); };
+  const submit = (e: React.FormEvent<HTMLFormElement>) => { e.preventDefault(); const data = new FormData(e.currentTarget); const next = { name: String(data.get("name")), message: String(data.get("message")) }; const all = [...entries, next]; setEntries(all); localStorage.setItem("svara-guestbook", JSON.stringify(all)); setSubmitted(true); e.currentTarget.reset(); };
+  const copyAccount = async () => { await navigator.clipboard?.writeText(CONFIG.account); setCopied(true); window.setTimeout(() => setCopied(false), 1800); };
+  return <>
+    <audio ref={audio} loop preload="auto" src="https://cdn.pixabay.com/audio/2022/10/25/audio_946fb3dd9f.mp3" />
+    {!opened && <main className="cover"><div className="cover-grain" /><div className="cover-inner"><p className="eyebrow cover-kicker">The wedding folio · 24.10.26</p><Seal /><p className="cover-guest">Kepada Yth.<br /><strong>{guest}</strong></p><h1>{CONFIG.couple}</h1><p className="cover-date">Sabtu, 24 Oktober 2026 <span>·</span> Yogyakarta</p><button className="button button--copper" onClick={open}><span>BUKA UNDANGAN</span><ChevronRight size={16} /></button><p className="cover-note">Sebuah hari untuk disimpan bersama</p><div className="cover-rule" /></div><div className="cover-vertical">S V A R A / A R U N A</div></main>}
+    {opened && <div className="site"><header className="nav"><a href="#top" className="wordmark"><Seal small /><span>SVARA <em>/</em> ARUNA</span></a><nav><a href="#story">Cerita</a><a href="#event">Acara</a><a href="#gallery">Galeri</a><a href="#rsvp">RSVP</a><a href="#gift">Tanda kasih</a></nav><button className={`music-toggle ${music ? "is-playing" : ""}`} onClick={() => { if (music) { audio.current?.pause(); setMusic(false); } else { audio.current?.play().then(() => setMusic(true)).catch(() => undefined); } }} aria-label={music ? "Matikan musik" : "Nyalakan musik"}><Music2 size={16} /> <span>{music ? "Musik on" : "Musik off"}</span></button></header>
+      <main id="top"><section className="hero"><div className="hero-rail"><span>SVARA / ARUNA</span><b>YOGYAKARTA · 2026</b></div><div className="hero-copy reveal"><p className="eyebrow">Sebuah undangan untuk {guest}</p><h1>Dua arah,<br /><i>satu rumah.</i></h1><div className="hero-meta"><span>24</span><div><b>OKTOBER</b><small>2026 · YOGYAKARTA</small></div></div></div><div className="hero-visual"><div className="hero-photo" /><Seal /></div><div className="scroll-cue">Scroll to wander <span /></div></section>
+        <section id="story" className="section story"><div className="rail"><span>01</span><span>CERITA KAMI</span></div><div className="story-content"><SectionTitle index="01" eyebrow="Catatan pertama · 01" title="Yang dimulai dari percakapan." /><div className="story-grid"><p className="lead reveal">{CONFIG.story}</p><div className="story-note reveal"><span className="quote-mark">“</span><p>Semoga kehadiran Anda menjadi bagian dari hangatnya hari ini.</p><small>— Svara & Aruna</small></div></div></div></section>
+        <section id="event" className="section event-section"><div className="rail"><span>02</span><span>WAKTU & TEMPAT</span></div><div className="event-content"><SectionTitle index="02" eyebrow="Catat harinya · 02" title="Sampai jumpa di Pendopo." /><div className="event-layout"><div className="event-image reveal" /><div className="events reveal"><article><p className="eyebrow">Akad nikah</p><h3>16.00 — 17.00 WIB</h3><p>Sabtu, 24 Oktober 2026<br />Pendopo Amerta</p></article><article><p className="eyebrow">Resepsi</p><h3>18.30 — 21.00 WIB</h3><p>Sabtu, 24 Oktober 2026<br />Pendopo Amerta</p></article><p className="address"><MapPin size={15} />{CONFIG.address}</p><div className="event-actions"><a className="text-link" href={CONFIG.calendarUrl} target="_blank" rel="noreferrer"><CalendarDays size={15} /> Simpan ke kalender</a><a className="text-link" href={CONFIG.mapsUrl} target="_blank" rel="noreferrer"><ExternalLink size={15} /> Petunjuk arah</a></div></div></div><Countdown /></div></section>
+        <section id="gallery" className="section gallery-section"><div className="rail"><span>03</span><span>MOMEN KECIL</span></div><div className="gallery-content"><SectionTitle index="03" eyebrow="Bingkai kecil · 03" title="Beberapa bingkai dari kami." /><div className="gallery-grid">{gallery.map(([caption, src], i) => <button className={`gallery-item gallery-item--${i + 1} reveal`} key={src} onClick={() => setLightbox(i)}><img src={src} alt={caption} /><span>{caption}</span></button>)}</div></div></section>
+        <section id="rsvp" className="section rsvp-section"><div className="rail"><span>04</span><span>KONFIRMASI</span></div><div className="rsvp-content"><SectionTitle index="04" eyebrow="Untuk hari ini · 04" title="Hadirkan doa terbaikmu." /><div className="rsvp-layout"><form onSubmit={submit} className="form reveal"><label>Nama lengkap<input name="name" required placeholder="Tuliskan nama Anda" /></label><label>Kehadiran<select name="attendance" defaultValue="hadir"><option value="hadir">Dengan senang hati hadir</option><option value="tidak">Belum dapat hadir</option></select></label><label>Pesan untuk kami<textarea name="message" required placeholder="Tuliskan ucapan atau doa..." /></label><button className="button button--dark" type="submit"><Send size={15} /> KIRIM KONFIRMASI</button>{submitted && <p className="success"><Heart size={15} /> Terima kasih, pesan Anda telah disimpan.</p>}</form><div className="guestbook reveal"><p className="eyebrow">Buku tamu</p>{entries.length === 0 ? <p className="empty">Belum ada pesan. Jadilah yang pertama meninggalkan hangat.</p> : entries.slice(-4).reverse().map((entry, i) => <div className="entry" key={i}><p>“{entry.message}”</p><small>{entry.name}</small></div>)}</div></div></div></section>
+        <section id="gift" className="section gift-section"><div className="rail"><span>05</span><span>TANDA KASIH</span></div><div className="gift-content"><div className="gift-copy reveal"><Gift size={20} /><p className="eyebrow">Tanda kasih</p><h2>Kehadiranmu adalah hadiah.</h2><p>Namun bila ingin berbagi tanda kasih, dapat melalui rekening berikut. Terima kasih atas perhatian dan doa yang menyertai kami.</p></div><div className="account reveal"><p className="eyebrow">{CONFIG.bank}</p><strong>{CONFIG.account}</strong><span>a.n. {CONFIG.recipient}</span><button onClick={copyAccount}><Copy size={14} /> {copied ? "Tersalin" : "Salin nomor rekening"}</button></div></div></section>
+      </main><footer><Seal small /><p>{CONFIG.shortNames}<br /><span>{CONFIG.dateLabel}</span></p><p className="footer-line">Simpan tanggalnya, lalu hadirkan doamu.</p></footer>
+    </div>}
+    {lightbox !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Galeri foto"><button className="lightbox-close" onClick={() => setLightbox(null)} aria-label="Tutup"><X /></button><button className="lightbox-prev" onClick={() => setLightbox((lightbox - 1 + gallery.length) % gallery.length)} aria-label="Sebelumnya"><ChevronLeft /></button><figure><img src={gallery[lightbox][1]} alt={gallery[lightbox][0]} /><figcaption>{gallery[lightbox][0]} <span>{lightbox + 1} / {gallery.length}</span></figcaption></figure><button className="lightbox-next" onClick={() => setLightbox((lightbox + 1) % gallery.length)} aria-label="Berikutnya"><ChevronRight /></button></div>}
+  </>;
 }
