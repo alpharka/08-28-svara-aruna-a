@@ -1,5 +1,11 @@
 # Sticky navigation refinement
 
+## Top identity and bottom section navigation
+
+- [x] Keep the couple identity visible in a dedicated top header.
+- [x] Keep only section links in the sticky bottom bar.
+- [x] Validate the arrangement and save a new checkpoint.
+
 ## Bottom navigation relocation
 
 - [x] Move the sticky section navigation to the bottom of the viewport.
