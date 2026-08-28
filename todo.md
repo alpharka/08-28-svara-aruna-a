@@ -15,3 +15,9 @@
 - [x] Keep the navigation visible while scrolling through invitation sections.
 - [x] Preserve readable contrast, touch targets, and section links on mobile.
 - [x] Validate the updated frontend and save a new checkpoint.
+
+## Customization documentation
+
+- [x] Write Indonesian documentation covering content, assets, navigation, audio, and deployment checks.
+- [x] Validate the Markdown guide.
+- [x] Publish `docs/CUSTOMIZATION_ID.md` to the connected GitHub repository.
